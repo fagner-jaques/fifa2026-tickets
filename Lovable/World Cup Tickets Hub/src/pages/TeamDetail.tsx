@@ -2,7 +2,7 @@ import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft, MapPin, Users, Languages, Trophy, Calendar, Star, Award,
-  Sparkles, Flame, Crown, Ticket
+  Sparkles, Flame, Crown, Ticket, ClipboardList, UserCog, Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,11 +10,20 @@ import { Badge } from '@/components/ui/badge';
 import { getTeamById } from '@/data/teams';
 import { getMatchesByTeam } from '@/data/matches';
 import { getTeamProfile } from '@/data/team-profiles';
+import { getTeamSquad } from '@/data/team-squads';
+
+const POSITION_COLORS: Record<string, string> = {
+  GOL: 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400',
+  DEF: 'bg-blue-500/15 text-blue-600 dark:text-blue-400',
+  MEI: 'bg-green-500/15 text-green-600 dark:text-green-400',
+  ATA: 'bg-red-500/15 text-red-600 dark:text-red-400',
+};
 
 const TeamDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const team = id ? getTeamById(id) : undefined;
   const profile = id ? getTeamProfile(id) : undefined;
+  const squad = id ? getTeamSquad(id) : undefined;
   const matches = team && !team.isTBD ? getMatchesByTeam(team.id) : [];
 
   if (!team) {
@@ -100,6 +109,123 @@ const TeamDetail: React.FC = () => {
                   ))}
                 </CardContent>
               </Card>
+
+              {/* Time base atual */}
+              {squad && (
+                <Card className="rounded-2xl border-border">
+                  <CardHeader>
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <CardTitle className="font-display text-2xl flex items-center gap-2">
+                        <ClipboardList className="w-6 h-6 text-primary" />
+                        Time Base Atual
+                      </CardTitle>
+                      <Badge variant="outline" className="font-mono">
+                        {squad.formation}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Treinador */}
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary/40 border border-border/50">
+                      <UserCog className="w-5 h-5 text-primary flex-shrink-0" />
+                      <div>
+                        <div className="text-xs text-muted-foreground">Treinador</div>
+                        <div className="font-medium">
+                          {squad.coach.name}
+                          <span className="text-muted-foreground text-sm font-normal">
+                            {' · '}{squad.coach.nationality}{' · desde '}{squad.coach.since}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Highlight */}
+                    <div className="p-4 rounded-xl bg-gold/10 border border-gold/30">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Zap className="w-4 h-4 text-gold" />
+                        <span className="text-xs uppercase tracking-wider text-gold font-medium">
+                          Destaque do time
+                        </span>
+                      </div>
+                      <div className="font-display text-lg">{squad.highlight.name}</div>
+                      <div className="text-xs text-muted-foreground mb-2">{squad.highlight.role}</div>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {squad.highlight.reason}
+                      </p>
+                    </div>
+
+                    {/* Starting XI */}
+                    <div>
+                      <h4 className="text-sm font-medium text-foreground mb-3">11 titulares</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {squad.startingXI.map((player) => (
+                          <div
+                            key={`${player.name}-${player.club}`}
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary/40 border border-border/40"
+                          >
+                            <span
+                              className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                                POSITION_COLORS[player.position] || ''
+                              }`}
+                            >
+                              {player.position}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium truncate">{player.name}</div>
+                              <div className="text-xs text-muted-foreground truncate">
+                                {player.club}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Reservas-chave */}
+                    {squad.reserves && squad.reserves.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-medium text-foreground mb-3">Reservas-chave</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {squad.reserves.map((player) => (
+                            <span
+                              key={`${player.name}-${player.club}`}
+                              className="text-xs px-2.5 py-1 rounded-full bg-secondary/60 border border-border/40"
+                              title={player.club}
+                            >
+                              <span
+                                className={`font-mono font-bold mr-1 ${
+                                  POSITION_COLORS[player.position]?.split(' ').slice(1).join(' ') || ''
+                                }`}
+                              >
+                                {player.position}
+                              </span>
+                              {player.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Última convocação */}
+                    <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Calendar className="w-4 h-4 text-primary" />
+                        <span className="text-xs uppercase tracking-wider text-primary font-medium">
+                          Última convocação
+                        </span>
+                      </div>
+                      <div className="text-sm font-medium">
+                        {squad.lastCallup.period} · {squad.lastCallup.context}
+                      </div>
+                      {squad.lastCallup.note && (
+                        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                          {squad.lastCallup.note}
+                        </p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Jogadores Icônicos */}
               <Card className="rounded-2xl border-border">
