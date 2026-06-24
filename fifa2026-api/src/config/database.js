@@ -1,6 +1,16 @@
 const sql = require('mssql');
 
-const config = {
+// A Connection String (Azure App Service → Connection strings) tem prioridade.
+// O App Service injeta com prefixo conforme o Type:
+//   SQLServer → SQLCONNSTR_, SQLAzure → SQLAZURECONNSTR_, Custom → CUSTOMCONNSTR_.
+// Fallback para variáveis individuais (DB_*) — compatível com a VM e o dev local.
+const connectionString =
+  process.env.SQLAZURECONNSTR_DefaultConnection ||
+  process.env.SQLCONNSTR_DefaultConnection ||
+  process.env.CUSTOMCONNSTR_DefaultConnection ||
+  process.env.DB_CONNECTION_STRING;
+
+const config = connectionString || {
   server: process.env.DB_SERVER,
   port: parseInt(process.env.DB_PORT) || 1433,
   user: process.env.DB_USER,

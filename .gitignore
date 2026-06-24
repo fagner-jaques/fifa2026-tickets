@@ -46,6 +46,8 @@ yarn-error.log*
 # ----- Temp / artefatos -----
 api.zip
 web.zip
+# Bacpac: distribuído pelo Blob Storage (container copa2026), não versionado no repo
+*.bacpac
 *.bacpac-extract/
 **/.bacpac-extract/
 
